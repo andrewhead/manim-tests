@@ -74,7 +74,89 @@ class MovingFrameBox(Scene):
     self.wait()
 
 
-class 
+class TransformEquation(Scene):
+  # This animation takes around 5 seconds to generate.
+  # It is also confusing because there are multiple constructs for performing
+  # the animation: first the "TransformMatchingTex" and then the "TransformMatchingShapes".
+  # When is it relevant to use each one? When are the curly braces necessary? And
+  # what if I want the "=" sign to fade out, instead of moving? It is kind of confusing.
+  # The double brackets are needed for "TransformMatchingTex" to know which expressions
+  # in the consecutive formulas correspond to each other.
+  # "TransformMatchingShapes" is not as smart, and while it requires less effort to
+  # express it, my guess is that it has more unanticipated side effects.
+  def construct(self):
+    eq1 = MathTex("42 {{ a^2 }} + {{ b^2 }} = {{ c^2 }}")
+    eq2 = MathTex("42 {{ a^2 }} = {{ c^2 }} - {{ b^2 }}")
+    eq3 = MathTex(r"a^2 = \frac{c^2 - b^2}{42}")
+    self.add(eq1)
+    self.wait()
+    self.play(TransformMatchingTex(eq1, eq2))
+    self.wait()
+    self.play(TransformMatchingShapes(eq2, eq3))
+    self.wait()
+
+
+class AttentionFormula(Scene):
+  # The amount of time I spent getting this to work so far: 35 minutes.
+  # One challenge was the regeneration of videos, where the video did not reload
+  # when I regenerated it; I had to close it then reopen it.
+  # Here is an example of where an animation does not have what I think is the
+  # desired behavior: https://docs.manim.community/en/stable/reference/manim.animation.transform_matching_parts.TransformMatchingTex.html
+  # The issue here is that the squares should move with the expressions.
+  # The more complex the animation gets, the longer the feedback loop becomes. This
+  # makes it feel more useful to provide ways of getting instant feedback on
+  # individual stages of an animation.
+  def construct(self):
+    # How do I express combination, for instance, two formulas joining into one?
+    # One small piece of friction is the need to specify 'r' for 'raw', instead of
+    # writing LaTeX as usual.
+    # One need for design is the ability to place multiple sub-formulas on the slide.
+    # Another piece of friction is that the formula gets to be so big! It gets to
+    # be a challenge to fit it all in one textbox.
+    # It is annoying that you need to specifically 'un-create' labels to remote them.
+    # I would like to rapidly change some choices like how labels appear or disappear
+    # across the whole animation.
+    h_t = MathTex(r"\boldsymbol{h}_t")
+    self.play(Write(h_t))
+
+    h_t_label = Tex("embeddings from layer $t$")
+    h_t_label.next_to(h_t, DOWN, buff=0.5)
+    self.add(h_t_label)
+    self.wait()
+    # self.play(Uncreate(h_t_label))
+    self.remove(h_t_label)
+    # self.wait()
+
+    # Even adding another symbol to the right of the first one is an obstacle.
+    # During my first try, it added the new symbol superimposed over the first.
+    # Additional friction is that the symbols are not aligned in their baseline
+    # but rather at the tops. And I want to scoot over the h_t when hbar_s
+    # is added, but I don't know how.
+    hbar_s = MathTex(r"\bar{\boldsymbol{h}}_s").shift(0.5 * RIGHT)
+    # This was my first version of code to get hbar_s to appear next to h_t
+    # I then attempted several other solutions, ultimately trying the 'shift'
+    # option to end up with something that was centered.
+    # hbar_s.next_to(h_t, RIGHT, buff=0.5)
+    # self.play(Write(hbar_s))
+    self.play(h_t.animate.shift(0.5 * LEFT))
+    self.play(Write(hbar_s))
+
+    hbar_s_label = Tex("embeddings from layer $s$")
+    hbar_s_label.next_to(hbar_s, DOWN, buff=0.5)
+    self.add(hbar_s_label)
+    self.wait()
+    self.remove(hbar_s_label)
+
+    # It would be nice to use macros for some of these symbols that are used
+    # repeatedly to support rapidly making cross-cutting changes and to reduce
+    # the change of typographical errors.
+    # This part of it took probably around 10 minutes to figure out and to
+    # implement. I had to add double braces around the arguments. I miscorrectly
+    # wrote that TeX for one of the formulas, which I only discovered by playing
+    # forward the animation. And even still, the animation was not correct---it
+    # did not interpolate correctly which terms were supposed to go where.
+    score = MathTex(r"\mathrm{score}({{\boldsymbol{h}_t}}, {{\bar{\boldsymbol{h}}_s)}}")
+    self.play(TransformMatchingTex(Group(h_t, hbar_s), score))
 
 
 class CreateCircle(Scene):
