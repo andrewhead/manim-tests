@@ -97,7 +97,7 @@ class TransformEquation(Scene):
 
 
 class AttentionFormula(Scene):
-  # The amount of time I spent getting this to work so far: 35 minutes.
+  # The amount of time I spent getting this to work so far: 60 minutes.
   # One challenge was the regeneration of videos, where the video did not reload
   # when I regenerated it; I had to close it then reopen it.
   # Here is an example of where an animation does not have what I think is the
@@ -119,7 +119,7 @@ class AttentionFormula(Scene):
     h_t = MathTex(r"\boldsymbol{h}_t")
     self.play(Write(h_t))
 
-    h_t_label = Tex("embeddings from layer $t$")
+    h_t_label = Tex("embeddings at time step $t$")
     h_t_label.next_to(h_t, DOWN, buff=0.5)
     self.add(h_t_label)
     self.wait()
@@ -131,8 +131,10 @@ class AttentionFormula(Scene):
     # During my first try, it added the new symbol superimposed over the first.
     # Additional friction is that the symbols are not aligned in their baseline
     # but rather at the tops. And I want to scoot over the h_t when hbar_s
-    # is added, but I don't know how.
-    hbar_s = MathTex(r"\bar{\boldsymbol{h}}_s").shift(0.5 * RIGHT)
+    # is added, but I don't know how. To get them to align at their baseline,
+    # I might need to follow a solution like this:
+    # https://www.reddit.com/r/manim/comments/k0avc3/aligning_textmobjects_with_descenders/
+    hbar_s = MathTex(r"\bar{\boldsymbol{h} }_s").shift(0.5 * RIGHT)
     # This was my first version of code to get hbar_s to appear next to h_t
     # I then attempted several other solutions, ultimately trying the 'shift'
     # option to end up with something that was centered.
@@ -141,7 +143,8 @@ class AttentionFormula(Scene):
     self.play(h_t.animate.shift(0.5 * LEFT))
     self.play(Write(hbar_s))
 
-    hbar_s_label = Tex("embeddings from layer $s$")
+    # I really like that the labels can include LaTeX
+    hbar_s_label = Tex("embeddings at time step $s$")
     hbar_s_label.next_to(hbar_s, DOWN, buff=0.5)
     self.add(hbar_s_label)
     self.wait()
@@ -150,13 +153,46 @@ class AttentionFormula(Scene):
     # It would be nice to use macros for some of these symbols that are used
     # repeatedly to support rapidly making cross-cutting changes and to reduce
     # the change of typographical errors.
-    # This part of it took probably around 10 minutes to figure out and to
+    # This part of it took probably around 20 minutes to figure out and to
     # implement. I had to add double braces around the arguments. I miscorrectly
     # wrote that TeX for one of the formulas, which I only discovered by playing
     # forward the animation. And even still, the animation was not correct---it
-    # did not interpolate correctly which terms were supposed to go where.
-    score = MathTex(r"\mathrm{score}({{\boldsymbol{h}_t}}, {{\bar{\boldsymbol{h}}_s)}}")
+    # did not interpolate correctly which terms were supposed to go where. I think
+    # one reason for the issue is that the double braces are not getting parsed
+    # correctly, when I have double braces in the formula from routine application
+    # of multiple macros to a letter.
+    # In fact, the double braces caused a couple of errors, not just the fact that
+    # my macros were being processed incorrectly (assigning the hat to the wrong part
+    # of the formula), but I also, to fix this, I needed to enter a space between
+    # the double braces associated with the macro, and that needs to be consistent
+    # across all definitions of the symbol (i.e., when I introduce it in the first
+    # formula, I need the same brittle spacing). A third issue is that I put my brackets
+    # outside of a parentheses, which was an action slip, and it took me a long time to
+    # figure out that that was a problem.
+    score = MathTex(r"\mathrm{score}({{\boldsymbol{h}_t}}, {{\bar{\boldsymbol{h} }_s}})")
     self.play(TransformMatchingTex(Group(h_t, hbar_s), score))
+
+    score_label = Tex("``match'' between embeddings")
+    score_label.next_to(score, DOWN, buff=0.5)
+    self.add(score_label)
+    self.wait()
+    self.remove(score_label)
+
+    # This would be a tricky one to animate through direct manipulation,
+    # *especially* if a single expression has multiple destinations, like
+    # trying to send the score to *both* the numerator and the denominator.
+    # This part has taken me probably around 20 minutes so far.
+    # I seem to have hit an impasse with the double braces around
+    # the formula: if I take them out below, the formula renders, and if I
+    # put them in, the formula does not render. But I am almost positive I need
+    # those brackets for one of the formulas to find its place in the next formula.
+    softmax = MathTex(
+      r"\frac{" +
+      r"\exp ( {{ \mathrm{score}(\boldsymbol{h}_t, \bar{\boldsymbol{h} }_s) }} )" +
+      r"}{" +
+      r"\sum_{s'=1}^S \exp ( \mathrm{score}(\boldsymbol{h}_t, \bar{\boldsymbol{h} }_s') )" +
+      r"}")
+    self.play(TransformMatchingTex(score, softmax))
 
 
 class CreateCircle(Scene):
